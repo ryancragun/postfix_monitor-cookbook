@@ -1,0 +1,192 @@
+#
+# Cookbook Name:: postfix_monitor
+# Recipe:: default
+#
+# Copyright (C) 2014 Ryan Cragun
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#    This file is automaticall managed by RightScale
+#
+LoadPlugin tail
+<Plugin "tail">
+ <File "<%= @mail_log %>">
+  Instance "postfix"
+
+   # We need to use a Type of 'value:COUNTER:0:65535' to ensure we don't
+   # overflow the counter when we restart collectd.  There are only a few know
+   # types in the types.db on the RightScale Skethcy Servers that match.
+   # Because of this we'll use Type "dns_qtype".  It's not pretty but it works.
+
+   # number of incoming connections
+   <Match>
+     Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: connect from\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "connection-in-open"
+   </Match>
+   <Match>
+     Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: disconnect from\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "connection-in-close"
+   </Match>
+   <Match>
+     Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: lost connection after .* from\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "connection-in-lost"
+   </Match>
+   <Match>
+     Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: timeout after .* from\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "connection-in-timeout"
+   </Match>
+   <Match>
+     Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: setting up TLS connection from\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "connection-in-TLS-setup"
+   </Match>
+   <Match>
+     Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: [A-Za-z]+ TLS connection established from\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "connection-in-TLS-established"
+   </Match>
+
+   # number of outgoing connections
+   <Match>
+     Regex "\\<postfix\\/smtp\\[[0-9]+\\]: setting up TLS connection to\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "connection-out-TLS-setup"
+   </Match>
+   <Match>
+     Regex "\\<postfix\\/smtp\\[[0-9]+\\]: [A-Za-z]+ TLS connection established to\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "connection-out-TLS-established"
+   </Match>
+
+  # number of inconming rejected emails
+  <Match>
+    Regex "\\<554 5\\.7\\.1\\>"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "rejected"
+  </Match>
+  <Match>
+    Regex "\\<450 4\\.7\\.1\\>.*Helo command rejected: Host not found\\>"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "rejected-host_not_found"
+  </Match>
+  <Match>
+    Regex "\\<450 4\\.7\\.1\\>.*Client host rejected: No DNS entries for your MTA, HELO and Domain\\>"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "rejected-no_dns_entry"
+  </Match>
+   <Match>
+     Regex "\\<450 4\\.7\\.1\\>.*Client host rejected: Mail appeared to be SPAM or forged\\>"
+     DSType "CounterInc"
+     Type "dns_qtype"
+     Instance "rejected-spam_or_forged"
+   </Match>
+
+  # status codes
+  <Match>
+    Regex "status=deferred"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "status-deferred"
+  </Match>
+  <Match>
+    Regex "status=forwarded"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "status-forwarded"
+  </Match>
+  <Match>
+    Regex "status=reject"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "status-reject"
+  </Match>
+  <Match>
+    Regex "status=sent"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "status-sent"
+  </Match>
+  <Match>
+    Regex "status=bounced"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "status-bounced"
+  </Match>
+  <Match>
+    Regex "status=SOFTBOUNCE"
+    DSType "CounterInc"
+    Type "dns_qtype"
+    Instance "status-softbounce"
+  </Match>
+
+  # message size
+  <Match>
+    Regex "size=([0-9]*)"
+    DSType "CounterAdd"
+    Type "ipt_bytes"
+    Instance "size"
+  </Match>
+
+  # total time spent in the Postfix queue
+  # further details: http://serverfault.com/questions/24121/understanding-a-postfix-log-file-entry
+  <Match>
+    Regex "delay=([\.0-9]*)"
+    DSType "GaugeAverage"
+    Type "gauge"
+    Instance "delay"
+  </Match>
+  # time spent before the queue manager, including message transmission
+  <Match>
+    Regex "delays=([\.0-9]*)/[\.0-9]*/[\.0-9]*/[\.0-9]*"
+    DSType "GaugeAverage"
+    Type "gauge"
+    Instance "delay-before_queue_mgr"
+  </Match>
+  # time spent in the queue manager
+  <Match>
+    Regex "delays=[\.0-9]*/([\.0-9]*)/[\.0-9]*/[\.0-9]*"
+    DSType "GaugeAverage"
+    Type "gauge"
+    Instance "delay-in_queue_mgr"
+  </Match>
+  # connection setup time including DNS, HELO and TLS
+  <Match>
+    Regex "delays=[\.0-9]*/[\.0-9]*/([\.0-9]*)/[\.0-9]*"
+    DSType "GaugeAverage"
+    Type "gauge"
+    Instance "delay-setup_time"
+  </Match>
+  # message transmission time
+  <Match>
+    Regex "delays=[\.0-9]*/[\.0-9]*/[\.0-9]*/([\.0-9]*)"
+    DSType "GaugeAverage"
+    Type "gauge"
+    Instance "delay-trans_time"
+  </Match>
+ </File>
+</Plugin>

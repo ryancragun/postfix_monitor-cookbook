@@ -1,0 +1,9 @@
+{
+  "postfix_monitor": {
+    "mail_log": "/var/log/maillog",
+    "enable_plugin": "true"
+  },
+  "run_list": [
+    "recipe[postfix_monitor::default]"
+  ]
+}

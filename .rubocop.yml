@@ -1,0 +1,7 @@
+AllCops:
+  Excludes:
+    - Vagrantfile
+HashSyntax:
+  EnforcedStyle: hash_rockets
+AlignParameters:
+  Enabled: false
