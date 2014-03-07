@@ -35,9 +35,6 @@ Place the `postfix_monitor::default` recipe in the runlist.
 # Recipes
 
 `postfix_monitor::default`
-
-## default
-
 This recipe ensures collectd is installed and configures a tail plugin instance that monitors postfix activity.
 
 # Author
