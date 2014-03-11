@@ -16,3 +16,9 @@ group :dev do
   gem 'rake'
   gem 'pry-rescue'
 end
+
+group :int do
+  gem 'test-kitchen'
+  gem 'kitchen-vagrant'
+  gem 'kitchen-rightscale'
+end
